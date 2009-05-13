@@ -170,10 +170,6 @@ def fix_names!(epis)
 end
 
 def fix_name!(episode, filename)
-  if @@config['format'].nil?
-    @@config['format'] = "%S s%se%e1[e%e2] - %E1[ (Part %p1)][ - %E2[ (Part %p2)]]"
-  end
-  
   format_values = {
     '%S' => episode[0][1]['series'],
     '%s' => episode[0][1]['season'].rjust(2, "0"),
@@ -399,7 +395,9 @@ parser.set_options(
 @@config = {}
 @@series = {}
 
-@@config = YAML.load_file( 'ruby-tvrenamer.yml' )
+if File.exist?('ruby-tvrenamer.yml')
+  @@config = YAML.load_file( 'ruby-tvrenamer.yml' )
+end
 
 loop do 
   opt, arg = parser.get
@@ -418,6 +416,16 @@ loop do
       nocache = true
       break
   end
+end
+
+# If the format is overridden, use it.
+unless format.nil?
+  @@config['format'] = format
+end
+
+# If I have no format anywhere, use the default.
+if @@config['format'].nil?
+  @@config['format'] = "%S s%se%e1[e%e2] - %E1[ (Part %p1)][ - %E2[ (Part %p2)]]"
 end
 
 path = ARGV.shift
