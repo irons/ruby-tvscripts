@@ -26,7 +26,7 @@ Usage: ruby scraper.rb directory [--refresh|-r] [--format=<format>|-f <format>]
   --nocache             Do not cache old renames at all
   --refresh             Refresh cache of downloaded XML
   --format=<format>     Format to output the filenames
-
+  
 CONFIG
 ------
 
@@ -41,8 +41,13 @@ It will also use a multi-format for 2 episode files:
 
 The name format is configurable either on the command line, or using a settings file.
 
-Settings can be saved in a ".ruby-tvrenamer.yml" file which is a YML file with default config
-values. See the ruby-tvrenamer.yml-example file.
+Settings can be saved in a "ruby-tvrenamer.yml" file inside a .ruby-tvrenamer directory in your home
+directory (linux) or user profile directory (windows) which is a YML file with default config values.
+See the ruby-tvrenamer.yml-example file.
+
+Example Windows XP Directory: C:\Document and Settings\USERNAME\Application Data\.ruby-tvrenamer\
+Example Windows Vista Directory: C:\Users\USERNAME\AppData\Roaming\.ruby-tvrenamer\
+Example Linux Directory: /home/USERNAME/.ruby-tvrenamer/
 
 Formatting variables:
 %S = Series Name

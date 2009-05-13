@@ -41,8 +41,8 @@ class Series
   attr_reader :name, :episodes
   
   def initialize(name, refresh)
-    @series_xml_path = Pathname.new(".ruby-tvrenamer/xml_cache/series_data/" + name + ".xml")
-    @episodes_xml_path = Pathname.new(".ruby-tvrenamer/xml_cache/episode_data/" + name + ".xml")
+    @series_xml_path = Pathname.new("#{@@config_dir}/xml_cache/series_data/" + name + ".xml")
+    @episodes_xml_path = Pathname.new("#{@@config_dir}/xml_cache/episode_data/" + name + ".xml")
     @name = name
     @episodes = Hash.new
     @series_xml_path.delete if @series_xml_path.file?
@@ -195,7 +195,7 @@ def fix_name!(episode, filename)
   #Filename has not changed
   if new_filename == filename
     @@renamer_cache.merge!({new_filename => Time.now})
-    Pathname.new(".ruby-tvrenamer/renamer_cache.txt").open("a")  {|file| file.puts "#{Time.now.to_s}|||||#{new_filename}"}
+    Pathname.new("#{@@config_dir}/renamer_cache.txt").open("a")  {|file| file.puts "#{Time.now.to_s}|||||#{new_filename}"}
     return filename
   end
   
@@ -207,7 +207,7 @@ def fix_name!(episode, filename)
     puts
     File.rename(filename, new_filename) unless filename == new_filename
     @@renamer_cache.merge!({new_filename => Time.now})
-    Pathname.new(".ruby-tvrenamer/renamer_cache.txt").open("a")  {|file| file.puts "#{Time.now.to_s}|||||#{new_filename}"}
+    Pathname.new("#{@@config_dir}/renamer_cache.txt").open("a")  {|file| file.puts "#{Time.now.to_s}|||||#{new_filename}"}
   end
   
   filename = new_filename
@@ -395,8 +395,17 @@ parser.set_options(
 @@config = {}
 @@series = {}
 
-if File.exist?('ruby-tvrenamer.yml')
-  @@config = YAML.load_file( 'ruby-tvrenamer.yml' )
+if !ENV["HOME"].nil?
+  @@config_dir = "#{ENV["HOME"]}/.ruby-tvrenamer"
+elsif !ENV["APPDATA"].nil?
+  @@config_dir = "#{ENV["APPDATA"]}/.ruby-tvrenamer"
+else
+  @@config_dir = ""
+end
+
+
+if File.exist?("#{@@config_dir}/ruby-tvrenamer.yml")
+  @@config = YAML.load_file( "#{@@config_dir}/ruby-tvrenamer.yml" )
 end
 
 loop do 
@@ -444,7 +453,7 @@ end
 
 @@renamer_cache = {}
 
-cache_file = Pathname.new(".ruby-tvrenamer/renamer_cache.txt")
+cache_file = Pathname.new("#{@@config_dir}/renamer_cache.txt")
 
 puts "Loading cache"
 cache_file.readlines.each { |line|
@@ -479,8 +488,8 @@ Find.find(path.to_s) do |filename|
   end
 end
 
-Pathname.new(".ruby-tvrenamer/renamer_cache.txt").delete
+Pathname.new("#{@@config_dir}/renamer_cache.txt").delete
 @@renamer_cache.each do |filename,time|
-  Pathname.new(".ruby-tvrenamer/renamer_cache.txt").open("a")  {|file| file.puts "#{time}|||||#{filename.to_s}"}
+  Pathname.new("#{@@config_dir}/renamer_cache.txt").open("a")  {|file| file.puts "#{time}|||||#{filename.to_s}"}
 end
 puts "Done!"
