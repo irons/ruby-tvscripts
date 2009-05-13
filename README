@@ -1,0 +1,23 @@
+Ruby TV File Renamer
+Written by Brian Stolz - brian@tecnobrat.com
+Originally written by Sam Saffron - sam.saffron@gmail.com
+
+This script was originally written by Sam to download meta data for your TV shows.  It has been 
+rewritten it to only be a fast file renamer.  It keeps a cache of all of your filenames checking
+them every 10 days to see if the filename has changed.  You can force a recheck of all filenames
+as well.
+
+The name format is configurable.  Settings can be saved in a ".ruby-tvrenamer" file which is a
+YML file with the following optional settings:
+
+format
+
+Formatting variables:
+%S = Series Name
+%E = Episode Name
+%s = Season Number
+%e = Episode Number
+%p = Part Number (optional)
+
+IMPORTANT: This script assumes you have your TV episodes in a directory structure such as
+"\Show Name\Season Number\Episode"
