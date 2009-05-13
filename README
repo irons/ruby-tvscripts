@@ -7,10 +7,42 @@ rewritten it to only be a fast file renamer.  It keeps a cache of all of your fi
 them every 10 days to see if the filename has changed.  You can force a recheck of all filenames
 as well.
 
-The name format is configurable.  Settings can be saved in a ".ruby-tvrenamer" file which is a
-YML file with the following optional settings:
+WHAT YOU NEED TO KNOW
+---------------------
 
-format
+This script assumes you have your TV episodes in a directory structure such as:
+"\Show Name\Season Number\Episode"
+
+You must have your files already in a directory structure like this.  The Show Name must match
+the show name from TheTVDB.  For example do not use "Battlestar Galactica" for the new BSG series
+use "Battlestar Galactica (2003)" instead.  So this would look like:
+
+"\Battlestar Galactica (2003)\Season 1\battlestar.galactica.s01e01.avi"
+
+USAGE
+-----
+
+Usage: ruby scraper.rb directory [--refresh|-r] [--format=<format>|-f <format>]
+  --nocache             Do not cache old renames at all
+  --refresh             Refresh cache of downloaded XML
+  --format=<format>     Format to output the filenames
+
+CONFIG
+------
+
+The script does not need any configuration as long as you want to use the default formatting which
+will make filenames such as:
+
+  Battlestar Galactica (2009) s03e10 - The Passage.avi
+
+It will also use a multi-format for 2 episode files:
+
+  Battlestar Galactica (2009) s03e11e12 - The Eye of Jupiter (Part 1) - Rapture (Part 2)
+
+The name format is configurable either on the command line, or using a settings file.
+
+Settings can be saved in a ".ruby-tvrenamer.yml" file which is a YML file with default config
+values. See the ruby-tvrenamer.yml-example file.
 
 Formatting variables:
 %S = Series Name
@@ -18,6 +50,6 @@ Formatting variables:
 %s = Season Number
 %e = Episode Number
 %p = Part Number (optional)
-
-IMPORTANT: This script assumes you have your TV episodes in a directory structure such as
-"\Show Name\Season Number\Episode"
+%E2 = Episode 2 Name (optional)
+%e2 = Episode 2 Number (optional)
+%p2 = Part 2 Number (optional)
