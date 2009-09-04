@@ -34,6 +34,7 @@ def usage()
   puts "\t--nocache          Do not cache old renames at all"
   puts "\t--refresh          Refresh cache of downloaded XML"
   puts "\t--format=<format>  Format to output the filenames"
+  exit
 end
 
 class Series 
@@ -170,6 +171,8 @@ def fix_names!(epis)
 end
 
 def fix_name!(episode, filename)
+  rename_dir = false
+
   format_values = {
     '%S' => episode[0][1]['series'],
     '%s' => episode[0][1]['season'].rjust(2, "0"),
@@ -182,6 +185,15 @@ def fix_name!(episode, filename)
   }
 
   new_basename = make_name(format_values, String.new(@@config['format']))
+
+  parent_dir = filename.dirname.parent
+  show_dir = parent_dir.basename
+
+  if episode[0][1]['series'] != show_dir.to_s
+    old_dir = parent_dir
+    new_dir = parent_dir.parent + Pathname(episode[0][1]['series'])
+    rename_dir = true
+  end
   
   new_filename = filename.dirname + (new_basename + filename.extname)
   
@@ -192,20 +204,27 @@ def fix_name!(episode, filename)
     exit
   end
   
+  if rename_dir
+    puts "Renaming directory #{old_dir} to #{new_dir}"
+    File.rename(old_dir, new_dir) unless old_dir == new_dir
+    puts "I had to rename a directory!  Restarting scan...."
+    return "restart"
+  end
+
   #Filename has not changed
-  if new_filename == filename
+  if new_filename.to_s == filename.to_s
     @@renamer_cache.merge!({new_filename => Time.now})
     Pathname.new("#{@@config_dir}/renamer_cache.txt").open("a")  {|file| file.puts "#{Time.now.to_s}|||||#{new_filename}"}
     return filename
   end
   
   if new_filename.file?
-    puts "can not rename #{filename} to #{new_filename} detected a duplicate"
+    puts "Can not rename #{filename} to #{new_filename} detected a duplicate"
   else
     puts "Before: #{filename}"
-    puts "After:  #{new_filename}"
-    puts
+    puts "After: #{new_filename}"
     File.rename(filename, new_filename) unless filename == new_filename
+    puts
     @@renamer_cache.merge!({new_filename => Time.now})
     Pathname.new("#{@@config_dir}/renamer_cache.txt").open("a")  {|file| file.puts "#{Time.now.to_s}|||||#{new_filename}"}
   end
@@ -463,32 +482,31 @@ cache_file.readlines.each { |line|
 puts "Loaded cache"
 
 puts "Starting to scan files"
-Find.find(path.to_s) do |filename|
-  Find.prune if [".","..",".ruby-tvrenamer"].include? filename
-  if filename =~ /\.(avi|mpg|mpeg|mp4|divx|mkv)$/ 
-    if nocache or @@renamer_cache[filename].nil? or @@renamer_cache[filename] < (Time.now - @@time_to_live)
-      @@renamer_cache.delete(filename)
-      episode = get_details(Pathname.new(filename), refresh)
-      if episode
-        begin 
-          fix_names!(episode)
-        rescue => err
-          puts
-          puts "Error: #{err}"
-          puts
-          err.backtrace.each do |line|
-            puts line
-          end
-          puts
+Dir.glob("**/*.{avi,mpg,mpeg,mp4,divx,mkv}") do |filename|
+  if nocache or @@renamer_cache[filename].nil? or @@renamer_cache[filename] < (Time.now - @@time_to_live)
+    @@renamer_cache.delete(filename)
+    episode = get_details(Pathname.new(filename), refresh)
+    if episode
+      begin 
+        if fix_names!(episode) == "restart"
+          retry
         end
-      else
-        puts "no data found for #{filename}"
+      rescue => err
+        puts
+        puts "Error: #{err}"
+        puts
+        err.backtrace.each do |line|
+          puts line
+        end
+        puts
       end
+    else
+      puts "no data found for #{filename}"
     end
   end
 end
 
-Pathname.new("#{@@config_dir}/renamer_cache.txt").delete
+Pathname.new("#{@@config_dir}/renamer_cache.txt").delete if Pathname.new("#{@@config_dir}/renamer_cache.txt").file?
 @@renamer_cache.each do |filename,time|
   Pathname.new("#{@@config_dir}/renamer_cache.txt").open("a")  {|file| file.puts "#{time}|||||#{filename.to_s}"}
 end
