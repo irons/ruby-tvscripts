@@ -9,12 +9,17 @@
 
 require 'yaml'
 require 'getoptlong'
+require 'net/http'
 require "cgi"
+require 'rexml/document'
 require 'pathname'
 require 'find'
 require 'fileutils'
 require 'pp'
 require 'time'
+include REXML
+
+API_KEY = 'B89CE93890E9419B'
 
 def usage()
   puts
@@ -22,6 +27,51 @@ def usage()
   puts 
   puts "Usage: ruby scraper.rb <target-directory-root> [source directory]"
 end
+
+class Series 
+  
+  attr_reader :name, :episodes
+  
+  def initialize(name)
+    puts "Doing lookup on #{name}"
+
+    @name = name
+    @episodes = Hash.new
+
+    series_xml = get_series_xml()
+    @series_xmldoc = Document.new(series_xml)
+
+    @name = @series_xmldoc.elements["Series/SeriesName"].text
+  end
+  
+  def id()
+    @series_xmldoc.elements["Series/id"].text 
+  end 
+  
+  def strip_dots(s)
+    s.gsub(".","")
+  end 
+    
+  def get_series_xml
+    url = URI.parse("http://thetvdb.com/api/GetSeries.php?seriesname=#{CGI::escape(@name)}").to_s
+    res = RemoteRequest.new("get").read(url)
+
+    doc = Document.new res
+    
+    series_xml = nil
+    series_element = nil
+
+    doc.elements.each("Data/Series") do |element|
+      series_element ||= element 
+        if strip_dots(element.elements["SeriesName"].text.downcase) == strip_dots(@name.downcase)	
+        series_element = element
+        break
+      end
+    end
+    series_xml = series_element.to_s
+    series_xml
+  end 
+end 
 
 def move_files!(filename, destination_path, episode)
   move_file!(filename, destination_path, episode[0], episode[1])
@@ -33,9 +83,7 @@ def move_file!(filename, destination_path, show, season)
     return filename
   end
 
-  show = show.gsub(/\./, " ")
-
-  show = show.split(" ").each{|word| word.capitalize!}.join(" ")
+  show = sanitize_name(show)
   new_dir = destination_path + Pathname(show) + Pathname("Season #{season}")
   new_filename = new_dir + filename.basename
 
@@ -98,12 +146,83 @@ def get_details(file)
   end 
   
   season = season.to_i.to_s
+  series = Series.new show_name.gsub(/\./, " ")
+  show_name = series.name
 
   puts "Show: #{show_name}"
   puts "Season: #{season}"
 
   return nil if episode_number.to_i > 99
   [show_name, season]
+end
+
+def sanitize_name(name)
+  name.gsub!(/\:/, "-")
+  ["?","\\",":","\"","|",">", "<", "*", "/"].each {|l| name.gsub!(l,"")}
+  name.strip
+end
+
+class RemoteRequest
+  def initialize(method)
+    method = 'get' if method.nil?
+    @opener = self.class.const_get(method.capitalize)
+  end
+
+  def read(url)
+    data = @opener.read(url)
+    data
+  end
+
+  private
+    class Get
+      def self.read(url)
+        attempt_number=0
+        errors=""
+        begin
+          attempt_number=attempt_number+1
+          if (attempt_number > 10) then
+            return nil
+          end
+
+          file = Net::HTTP.get_response URI.parse(url)
+          if (file.message != "OK") then
+            raise InvalidResponseFromFeed, file.message
+          end
+        rescue Timeout::Error => err
+          puts "Timeout Error: #{err}, sleeping for 10 secs, and trying again (Attempt #{attempt_number})."
+          sleep 10
+          retry
+        rescue Errno::ECONNREFUSED => err
+          puts "Connection Error: #{err}, sleeping for 10 secs, and trying again (Attempt #{attempt_number})."
+          sleep 10
+          retry
+        rescue SocketError => exception
+          puts "Socket Error: #{exception}, sleeping for 10 secs, and trying again (Attempt #{attempt_number})."
+          sleep 10
+          retry
+        rescue EOFError => exception
+          puts "Socket Error: #{exception}, sleeping for 10 secs, and trying again (Attempt #{attempt_number})."
+          sleep 10
+          retry
+        rescue InvalidResponseFromFeed => err
+          puts "Invalid response: #{err}, sleeping for 10 secs, and trying again (Attempt #{attempt_number})."
+          sleep 10
+          retry
+        rescue => err
+          puts "Invalid response: #{err}, sleeping for 10 secs, and trying again (Attempt #{attempt_number})."
+          sleep 10
+          retry
+        else
+          return file.body
+        end
+      end
+    end
+end
+
+class InvalidResponseFromFeed < RuntimeError
+  def initialize(info)
+  @info = info
+  end
 end
 
 # Main program

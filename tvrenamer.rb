@@ -22,7 +22,11 @@ include REXML
 
 API_KEY = 'B89CE93890E9419B'
 
-@@time_to_live = 60*60*24*7 # How long to cache files
+# How long to cache files.  Set to 16 days so that it doesn't redownload
+# if a series skips a week, and 2 extra days incase of a slow release.
+# It will automatically redownload if its a brand new file (new episodes).
+@@time_to_live = 60*60*24*16 
+
 @@series_cache = 24*60*60 # Should be long enough for one run of the script
 
 def usage()
@@ -188,10 +192,11 @@ def fix_name!(episode, filename)
 
   parent_dir = filename.dirname.parent
   show_dir = parent_dir.basename
+  new_show_dir = sanitize_name(episode[0][1]['series'])
 
-  if episode[0][1]['series'] != show_dir.to_s
+  if new_show_dir != show_dir.to_s
     old_dir = parent_dir
-    new_dir = parent_dir.parent + Pathname(episode[0][1]['series'])
+    new_dir = parent_dir.parent + Pathname(new_show_dir)
     rename_dir = true
   end
   
@@ -249,6 +254,13 @@ def make_name(format_values, format_string)
   new_basename.gsub!(/\:/, "-")
   ["?","\\",":","\"","|",">", "<", "*", "/"].each {|l| new_basename.gsub!(l,"")}
   new_basename.strip
+end
+
+def sanitize_name(name)
+  # sanitize the name 
+  name.gsub!(/\:/, "-")
+  ["?","\\",":","\"","|",">", "<", "*", "/"].each {|l| name.gsub!(l,"")}
+  name.strip
 end
 
 def drop_extension(filename)
@@ -483,6 +495,7 @@ puts "Loaded cache"
 
 puts "Starting to scan files"
 Dir.glob("**/*.{avi,mpg,mpeg,mp4,divx,mkv}") do |filename|
+  filename = filename.to_s
   if nocache or @@renamer_cache[filename].nil? or @@renamer_cache[filename] < (Time.now - @@time_to_live)
     @@renamer_cache.delete(filename)
     episode = get_details(Pathname.new(filename), refresh)
