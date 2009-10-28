@@ -1,0 +1,24 @@
+Download Status
+Written by Brian Stolz - brian@tecnobrat.com
+
+ABOUT THIS SCRIPT
+-----------------
+
+This script will move your files into the following directory structure:
+"\Show Name\Season Number\Episode"
+
+You need to supply the target directory root.  For example if you would like
+a structure as "/home/name/shows/Show Name/Season 1/Episode 12" then you should
+supply "/home/name/shows/" as the source directory.
+
+USAGE
+-----
+
+Usage: ruby tvmover.rb <target-directory-root> [source directory]
+
+If you do not supply a source directory, it will use the current directory.
+  
+CONFIG
+------
+
+No configuration needed

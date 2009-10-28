@@ -25,7 +25,9 @@ def usage()
   puts
   puts "Moves your files into a directory."
   puts 
-  puts "Usage: ruby scraper.rb <target-directory-root> [source directory]"
+  puts "Usage: ruby tvmover.rb <target-directory> [source directory]"
+  puts 
+  exit
 end
 
 class Series 

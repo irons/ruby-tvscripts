@@ -1,0 +1,60 @@
+Ruby TV File Renamer
+Written by Brian Stolz - brian@tecnobrat.com
+Originally written by Sam Saffron - sam.saffron@gmail.com
+
+This script was originally written by Sam to download meta data for your TV shows.  It has been 
+rewritten it to only be a fast file renamer.  It keeps a cache of all of your filenames checking
+them every 10 days to see if the filename has changed.  You can force a recheck of all filenames
+as well.
+
+WHAT YOU NEED TO KNOW
+---------------------
+
+This script assumes you have your TV episodes in a directory structure such as:
+"\Show Name\Season Number\Episode"
+
+You must have your files already in a directory structure like this.  The Show Name must match
+the show name from TheTVDB.  For example do not use "Battlestar Galactica" for the new BSG series
+use "Battlestar Galactica (2003)" instead.  So this would look like:
+
+"\Battlestar Galactica (2003)\Season 1\battlestar.galactica.s01e01.avi"
+
+USAGE
+-----
+
+Usage: ruby tvrenamer.rb directory [--refresh|-r] [--format=<format>|-f <format>]
+  --nocache             Do not cache old renames at all
+  --refresh             Refresh cache of downloaded XML
+  --format=<format>     Format to output the filenames
+  
+CONFIG
+------
+
+The script does not need any configuration as long as you want to use the default formatting which
+will make filenames such as:
+
+  Battlestar Galactica (2009) s03e10 - The Passage.avi
+
+It will also use a multi-format for 2 episode files:
+
+  Battlestar Galactica (2009) s03e11e12 - The Eye of Jupiter (Part 1) - Rapture (Part 2)
+
+The name format is configurable either on the command line, or using a settings file.
+
+Settings can be saved in a "ruby-tvrenamer.yml" file inside a .ruby-tvscripts directory in your home
+directory (linux) or user profile directory (windows) which is a YML file with default config values.
+See the ruby-tvrenamer.yml-example file.
+
+Example Windows XP Directory: C:\Document and Settings\USERNAME\Application Data\.ruby-tvscripts\
+Example Windows Vista Directory: C:\Users\USERNAME\AppData\Roaming\.ruby-tvscripts\
+Example Linux Directory: /home/USERNAME/.ruby-tvscripts/
+
+Formatting variables:
+%S = Series Name
+%E = Episode Name
+%s = Season Number
+%e = Episode Number
+%p = Part Number (optional)
+%E2 = Episode 2 Name (optional)
+%e2 = Episode 2 Number (optional)
+%p2 = Part 2 Number (optional)

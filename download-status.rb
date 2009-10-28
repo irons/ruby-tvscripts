@@ -17,23 +17,48 @@ require 'pp'
 require 'time'
 require 'prowl'
 
+def usage()
+  puts
+  puts "Moves your files into an organized directory"
+  puts
+  puts "Usage: ruby download-status.rb <directory>"
+  puts
+  exit
+end
+
+parser = GetoptLong.new
+parser.set_options(
+  ["-h", "--help", GetoptLong::NO_ARGUMENT]
+)
+
+loop do
+  opt, arg = parser.get
+  break if not opt
+  case opt
+    when "-h"
+      usage
+      break
+  end
+end
+
+
 puts "Starting at #{Time.now}"
 
 if !ENV["HOME"].nil?
-  @@config_dir = "#{ENV["HOME"]}/.download-status"
+  @@config_dir = "#{ENV["HOME"]}/.ruby-tvscripts"
 elsif !ENV["APPDATA"].nil?
-  @@config_dir = "#{ENV["APPDATA"]}/.download-status"
+  @@config_dir = "#{ENV["APPDATA"]}/.ruby-tvscripts"
 else
   @@config_dir = ""
 end
 
-if File.exist?("#{@@config_dir}/ruby-download-status.yml")
-  PROWL_API = YAML.load_file( "#{@@config_dir}/ruby-download-status.yml" )['prowl_api']
+if File.exist?("#{@@config_dir}/download-status.yml")
+  PROWL_API = YAML.load_file( "#{@@config_dir}/download-status.yml" )['prowl_api']
 else
-  puts "Please create a #{@@config_dir}/ruby-download-status.yml file with your api key.  Please see example file."
+  puts "Please create a #{@@config_dir}/download-status.yml file with your api key.  Please see example file."
 end
 
-puts "Was not able to set API Key, please check #{@@config_dir}/ruby-download-status.yml file.  Please see example file." if PROWL_API.nil? or PROWL_API.empty?
+puts "Was not able to set API Key, please check #{@@config_dir}/download-status.yml file.  Please see example file." if PROWL_API.nil? or PROWL_API.empty?
 
 path = ARGV.shift
 

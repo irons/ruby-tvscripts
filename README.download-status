@@ -1,0 +1,28 @@
+Download Status
+Written by Brian Stolz - brian@tecnobrat.com
+
+WHAT YOU NEED TO KNOW
+---------------------
+
+This script simply watches a directory, keeping a cache notifying you of any new files found
+by sending a Prowl notification to your iPhone.
+
+
+
+USAGE
+-----
+
+Usage: ruby download-status.rb directory
+  
+CONFIG
+------
+
+The script requires configuration to add the Prowl API Key you would like to use.
+
+Settings are saved in a "download-status.yml" file inside a .ruby-tvscripts directory in your home
+directory (linux) or user profile directory (windows) which is a YML file with default config values.
+See the download-status.yml-example file.
+
+Example Windows XP Directory: C:\Document and Settings\USERNAME\Application Data\.ruby-tvscripts\
+Example Windows Vista Directory: C:\Users\USERNAME\AppData\Roaming\.ruby-tvscripts\
+Example Linux Directory: /home/USERNAME/.ruby-tvscripts/

@@ -33,11 +33,12 @@ def usage()
   puts
   puts "Renames your files."
   puts 
-  puts "Usage: ruby scraper.rb directory [--refresh|-r] [--format=<format>|-f <format>]"
+  puts "Usage: ruby tvrenamer.rb <source-directory> [--refresh|-r] [--format=<format>|-f <format>]"
   puts
   puts "\t--nocache          Do not cache old renames at all"
   puts "\t--refresh          Refresh cache of downloaded XML"
   puts "\t--format=<format>  Format to output the filenames"
+  puts
   exit
 end
 
@@ -427,9 +428,9 @@ parser.set_options(
 @@series = {}
 
 if !ENV["HOME"].nil?
-  @@config_dir = "#{ENV["HOME"]}/.ruby-tvrenamer"
+  @@config_dir = "#{ENV["HOME"]}/.ruby-tvscripts"
 elsif !ENV["APPDATA"].nil?
-  @@config_dir = "#{ENV["APPDATA"]}/.ruby-tvrenamer"
+  @@config_dir = "#{ENV["APPDATA"]}/.ruby-tvscripts"
 else
   @@config_dir = ""
 end
