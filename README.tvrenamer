@@ -41,9 +41,9 @@ It will also use a multi-format for 2 episode files:
 
 The name format is configurable either on the command line, or using a settings file.
 
-Settings can be saved in a "ruby-tvrenamer.yml" file inside a .ruby-tvscripts directory in your home
+Settings can be saved in a "tvrenamer.yml" file inside a .ruby-tvscripts directory in your home
 directory (linux) or user profile directory (windows) which is a YML file with default config values.
-See the ruby-tvrenamer.yml-example file.
+See the tvrenamer.yml-example file.
 
 Example Windows XP Directory: C:\Document and Settings\USERNAME\Application Data\.ruby-tvscripts\
 Example Windows Vista Directory: C:\Users\USERNAME\AppData\Roaming\.ruby-tvscripts\

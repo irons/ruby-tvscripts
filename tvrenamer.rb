@@ -436,8 +436,8 @@ else
 end
 
 
-if File.exist?("#{@@config_dir}/ruby-tvrenamer.yml")
-  @@config = YAML.load_file( "#{@@config_dir}/ruby-tvrenamer.yml" )
+if File.exist?("#{@@config_dir}/tvrenamer.yml")
+  @@config = YAML.load_file( "#{@@config_dir}/tvrenamer.yml" )
 end
 
 loop do 
