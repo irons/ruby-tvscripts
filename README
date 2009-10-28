@@ -8,3 +8,4 @@ README files.
 tvrenamer.rb - Renames TV episodes so they have the episode name in them.  Formatting is configurable.
 download-status.rb - Ran via a cron, which sends a Prowl notification to a iPhone when a new file is found.
 tvmover.rb - Moves files found in a single directory into the correct directory structure for tvrenamer.rb to handle.
+delete-watched.rb - Deletes files from your hard drive that are marked as watched in your XBMC library.
