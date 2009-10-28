@@ -30,7 +30,7 @@ end
 
 class Series 
   
-  attr_reader :name, :episodes
+  attr_reader :episodes
   
   def initialize(name)
     puts "Doing lookup on #{name}"
@@ -40,10 +40,13 @@ class Series
 
     series_xml = get_series_xml()
     @series_xmldoc = Document.new(series_xml)
-
-    @name = @series_xmldoc.elements["Series/SeriesName"].text
   end
   
+  def name
+    return nil if @series_xmldoc.elements["Series/SeriesName"].nil?
+    @series_xmldoc.elements["Series/SeriesName"].text
+  end
+
   def id()
     @series_xmldoc.elements["Series/id"].text 
   end 
@@ -63,7 +66,7 @@ class Series
 
     doc.elements.each("Data/Series") do |element|
       series_element ||= element 
-        if strip_dots(element.elements["SeriesName"].text.downcase) == strip_dots(@name.downcase)	
+        if strip_dots(element.elements["SeriesName"].text.downcase) == strip_dots(@name.downcase)
         series_element = element
         break
       end
@@ -147,6 +150,7 @@ def get_details(file)
   
   season = season.to_i.to_s
   series = Series.new show_name.gsub(/\./, " ")
+  return nil if series.name.nil?
   show_name = series.name
 
   puts "Show: #{show_name}"
@@ -289,7 +293,13 @@ Find.find(source_path.to_s) do |filename|
         puts
       end
     else
-      puts "no data found for #{filename}"
+      puts
+      puts "##########"
+      puts "#  ERROR #"
+      puts "##########"
+      puts "No data found for #{filename}"
+      puts "##########"
+      puts
     end
   end
 end

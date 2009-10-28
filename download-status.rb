@@ -28,10 +28,12 @@ else
 end
 
 if File.exist?("#{@@config_dir}/ruby-download-status.yml")
-  PROWL_API = YAML.load_file( "#{@@config_dir}/ruby-download-status.yml" )[:prowl_api]
+  PROWL_API = YAML.load_file( "#{@@config_dir}/ruby-download-status.yml" )['prowl_api']
 else
   puts "Please create a #{@@config_dir}/ruby-download-status.yml file with your api key.  Please see example file."
 end
+
+puts "Was not able to set API Key, please check #{@@config_dir}/ruby-download-status.yml file.  Please see example file." if PROWL_API.nil? or PROWL_API.empty?
 
 path = ARGV.shift
 
