@@ -1,0 +1,25 @@
+Download Status
+Written by Brian Stolz - brian@tecnobrat.com
+
+ABOUT THIS SCRIPT
+---------------------
+
+This script deletes files from your hard drive that are marked as watched in the XBMC library.
+
+USAGE
+-----
+
+Usage: ruby delete-watched.rb directory
+  
+CONFIG
+------
+
+The script requires configuration to add the XBMC video DB file you would like to use.
+
+Settings are saved in a "delete-watched.yml" file inside a .ruby-tvscripts directory in your home
+directory (linux) or user profile directory (windows) which is a YML file with default config values.
+See the delete-watched.yml-example file.
+
+Example Windows XP Directory: C:\Document and Settings\USERNAME\Application Data\.ruby-tvscripts\
+Example Windows Vista Directory: C:\Users\USERNAME\AppData\Roaming\.ruby-tvscripts\
+Example Linux Directory: /home/USERNAME/.ruby-tvscripts/
