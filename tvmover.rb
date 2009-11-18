@@ -19,7 +19,7 @@ require 'pp'
 require 'time'
 include REXML
 
-API_KEY = 'B89CE93890E9419B'
+API_KEY = 'F63030FC56E9E594'
 
 def usage()
   puts

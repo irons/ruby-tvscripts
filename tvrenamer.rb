@@ -20,7 +20,7 @@ require 'pp'
 require 'time'
 include REXML
 
-API_KEY = 'B89CE93890E9419B'
+API_KEY = 'F63030FC56E9E594'
 
 # How long to cache files.  Set to 16 days so that it doesn't redownload
 # if a series skips a week, and 2 extra days incase of a slow release.
@@ -69,12 +69,13 @@ class Series
 
     if not @episodes_xml_path.file?  
       episodes_xml = get_episodes_xml(id)
+
       #ensure we have a xml_cache dir
       unless @episodes_xml_path.dirname.directory? 
         FileUtils.mkdir_p(@episodes_xml_path.dirname.to_s)  
       end 
       @episodes_xml_path.open("w")  {|file| file.puts episodes_xml}
-      @episodes_xmldoc = Document.new(episodes_xml)
+      @episodes_xmldoc = Document.new(episodes_xml) unless episodes_xml.nil?
     else 
       @episodes_xml_path.open("r") {|file| @episodes_xmldoc = Document.new(file) }
     end
@@ -82,7 +83,7 @@ class Series
     @episodes_xmldoc.elements.each("Data/Episode") do |episode|
       @episodes[episode.elements["SeasonNumber"].text] = Hash.new unless @episodes[episode.elements["SeasonNumber"].text].class == Hash
       @episodes[episode.elements["SeasonNumber"].text][episode.elements["EpisodeNumber"].text] = episode.elements["EpisodeName"].text
-    end
+    end unless @episodes_xmldoc.nil?
   end
   
   def id()
@@ -95,6 +96,11 @@ class Series
   def get_episodes_xml(series_id)
     url = URI.parse("http://thetvdb.com/api/#{API_KEY}/series/#{series_id}/all/en.xml").to_s
     res = RemoteRequest.new("get").read(url)
+
+    if res.nil?
+      puts "Could not download XML Data for series ID #{series_id} -- #{url}"
+      return nil
+    end
 
     doc = Document.new res
     doc.elements.each("Data") do |element|
@@ -176,6 +182,7 @@ def fix_names!(epis)
 end
 
 def fix_name!(episode, filename)
+  return nil if episode.nil?
   rename_dir = false
 
   format_values = {
@@ -318,18 +325,21 @@ def get_details(file, refresh)
   end 
   
   season = season.to_i.to_s 
+  
   episode_number = episode_number.to_i.to_s
   episode_number2 = episode_number2.to_i.to_s unless episode_number2.nil?
   
   return nil if episode_number.to_i > 99
-  
+
   if @@series[show_name].nil?
     @@series[show_name] = Series.new show_name, refresh
     series = @@series[show_name]
   else
     series = @@series[show_name]
   end
-  begin 
+  return nil if series.episodes.size < 1
+
+  begin
     if episode_number2.nil?
       [series.get_episode(file, season, episode_number, refresh)]
     else
@@ -365,7 +375,7 @@ class RemoteRequest
         errors=""
         begin
           attempt_number=attempt_number+1
-          if (attempt_number > 10) then
+          if (attempt_number > 2) then
             return nil
           end
           
@@ -391,7 +401,7 @@ class RemoteRequest
           retry
         rescue InvalidResponseFromFeed => err
           puts "Invalid response: #{err}, sleeping for 10 secs, and trying again (Attempt #{attempt_number})."
-          sleep 10
+          sleep 1
           retry
         rescue => err
           puts "Invalid response: #{err}, sleeping for 10 secs, and trying again (Attempt #{attempt_number})."
@@ -501,7 +511,7 @@ Dir.glob("**/*.{avi,mpg,mpeg,mp4,divx,mkv}") do |filename|
     @@renamer_cache.delete(filename)
     episode = get_details(Pathname.new(filename), refresh)
     if episode
-      begin 
+      begin
         if fix_names!(episode) == "restart"
           retry
         end
