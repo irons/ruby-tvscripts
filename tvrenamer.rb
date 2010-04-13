@@ -324,8 +324,7 @@ def get_details(file, refresh)
     end 
   end 
   
-  season = season.to_i.to_s 
-  
+  season = season.to_i.to_s
   episode_number = episode_number.to_i.to_s
   episode_number2 = episode_number2.to_i.to_s unless episode_number2.nil?
   
@@ -497,14 +496,14 @@ end
 
 cache_file = Pathname.new("#{@@config_dir}/renamer_cache.txt")
 
-puts "Loading cache"
+puts "Loading cache" unless ENV['QUIET'] = "true"
 cache_file.readlines.each { |line|
     arr = line.chomp.split("|||||")
     @@renamer_cache.merge!({arr[1] => Time.parse(arr[0])})
 } if cache_file.file?
-puts "Loaded cache"
+puts "Loaded cache" unless ENV['QUIET'] = "true"
 
-puts "Starting to scan files"
+puts "Starting to scan files" unless ENV['QUIET'] = "true"
 Dir.glob("**/*.{avi,mpg,mpeg,mp4,divx,mkv}") do |filename|
   filename = filename.to_s
   if nocache or @@renamer_cache[filename].nil? or @@renamer_cache[filename] < (Time.now - @@time_to_live)
@@ -534,4 +533,4 @@ Pathname.new("#{@@config_dir}/renamer_cache.txt").delete if Pathname.new("#{@@co
 @@renamer_cache.each do |filename,time|
   Pathname.new("#{@@config_dir}/renamer_cache.txt").open("a")  {|file| file.puts "#{time}|||||#{filename.to_s}"}
 end
-puts "Done!"
+puts "Done!" unless ENV['QUIET'] = "true"

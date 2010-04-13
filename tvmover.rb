@@ -150,6 +150,7 @@ def get_details(file)
     end 
   end 
   
+  return nil if show_name.nil?
   season = season.to_i.to_s
   series = Series.new show_name.gsub(/\./, " ")
   return nil if series.name.nil?
@@ -157,6 +158,8 @@ def get_details(file)
 
   puts "Show: #{show_name}"
   puts "Season: #{season}"
+  puts "Episode: #{episode_number}"
+  puts "Episode2: #{episode_number2}" if episode_number2
 
   return nil if episode_number.to_i > 99
   [show_name, season]
@@ -277,7 +280,7 @@ if not destination_path.directory?
   exit
 end
 
-puts "Starting to scan files"
+puts "Starting to scan files" unless ENV['QUIET'] = "true"
 Find.find(source_path.to_s) do |filename|
   Find.prune if [".","..",".ruby-tvmover"].include? filename
   if filename =~ /\.(avi|mpg|mpeg|mp4|divx|mkv)$/ 
@@ -306,4 +309,4 @@ Find.find(source_path.to_s) do |filename|
   end
 end
 
-puts "Done!"
+puts "Done!" unless ENV['QUIET'] = "true"
