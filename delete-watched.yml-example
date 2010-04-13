@@ -1,1 +1,17 @@
-db_file: "/home/username/.xbmc/userdata/Database/MyVideos34.db"
+# SQLite Config
+# engine: "sqlite" # For SQLite
+# file: "/home/username/.xbmc/userdata/Database/MyVideos34.db" #SQLite Only
+#
+# MySQL Config
+engine: "mysql" # For MySQL
+host: "localhost" # MySQL Only
+user: "xbmc" # MySQL Only
+password: "xbmc" # MySQL Only
+db: "xbmc_video" # MySQL Only
+#
+# String replacement
+# Useful when you are using samba in your library file, but the file exists on the local machine. So we do some replacement to handle the local location
+# For example the default will change "smb://SERVER/files/blah.avi" into "/media/files/blah.avi"
+string_find: "smb://SERVER" #string to find in the filename
+string_replace: "/media" #replace with this
+
