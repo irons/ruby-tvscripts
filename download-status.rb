@@ -102,11 +102,12 @@ if found.size > 0
   end
   puts output
 
-  Prowl.add(PROWL_API, {
+  Prowl.add(
+    :apikey => PROWL_API,
     :application => "DLS",
     :event => "#{found.size} File(s) Downloaded",    
     :description => output
-  })
+  )
 else
   puts "Found no files"
 end
