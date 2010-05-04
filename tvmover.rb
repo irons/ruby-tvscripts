@@ -17,9 +17,11 @@ require 'find'
 require 'fileutils'
 require 'pp'
 require 'time'
+require File.expand_path(File.dirname(__FILE__)) + '/net-http-compression.rb'
 include REXML
 
 API_KEY = 'F63030FC56E9E594'
+
 
 def usage()
   puts
@@ -59,6 +61,7 @@ class Series
     
   def get_series_xml
     url = URI.parse("http://thetvdb.com/api/GetSeries.php?seriesname=#{CGI::escape(@name)}").to_s
+
     res = RemoteRequest.new("get").read(url)
 
     doc = Document.new res
@@ -222,7 +225,7 @@ class RemoteRequest
           sleep 10
           retry
         else
-          return file.body
+          return file.plain_body
         end
       end
     end
