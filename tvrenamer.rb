@@ -26,14 +26,14 @@ API_KEY = 'F63030FC56E9E594'
 # How long to cache files.  Set to 16 days so that it doesn't redownload
 # if a series skips a week, and 2 extra days incase of a slow release.
 # It will automatically redownload if its a brand new file (new episodes).
-@@time_to_live = 60*60*24*16 
+@@time_to_live = 60*60*24*16
 
 @@series_cache = 24*60*60 # Should be long enough for one run of the script
 
 def usage()
   puts
   puts "Renames your files."
-  puts 
+  puts
   puts "Usage: ruby tvrenamer.rb <source-directory> [--refresh|-r] [--format=<format>|-f <format>]"
   puts
   puts "\t--nocache          Do not cache old renames at all"
@@ -43,60 +43,69 @@ def usage()
   exit
 end
 
-class Series 
-  
+class Series
+
   attr_reader :name, :episodes
-  
+
   def initialize(name, refresh)
-    @series_xml_path = Pathname.new("#{@@config_dir}/xml_cache/series_data/" + name + ".xml")
-    @episodes_xml_path = Pathname.new("#{@@config_dir}/xml_cache/episode_data/" + name + ".xml")
     @name = name
+    do_name_overrides
+    @series_xml_path = Pathname.new("#{@@config_dir}/xml_cache/series_data/" + @name + ".xml")
+    @episodes_xml_path = Pathname.new("#{@@config_dir}/xml_cache/episode_data/" + @name + ".xml")
     @episodes = Hash.new
     @series_xml_path.delete if @series_xml_path.file?
     @episodes_xml_path.delete if @episodes_xml_path.file?
-    if not @series_xml_path.file?  
+    if not @series_xml_path.file?
       series_xml = get_series_xml()
       #ensure we have a xml_cache dir
-      unless @series_xml_path.dirname.directory? 
-        FileUtils.mkdir_p(@series_xml_path.dirname.to_s)  
-      end 
-      @series_xml_path.open("w")  {|file| file.puts series_xml}
+      unless @series_xml_path.dirname.directory?
+        FileUtils.mkdir_p(@series_xml_path.dirname.to_s)
+      end
+      @series_xml_path.open("w")  {|file| file.puts series_xml} unless series_xml.nil? or series_xml.empty?
       @series_xmldoc = Document.new(series_xml)
-    else 
+    else
       @series_xml_path.open("r") {|file| @series_xmldoc = Document.new(file) }
     end
 
+    return nil if series_xml.nil? or series_xml.empty?
+
     @name = @series_xmldoc.elements["Series/SeriesName"].text
 
-    if not @episodes_xml_path.file?  
+    if not @episodes_xml_path.file?
       episodes_xml = get_episodes_xml(id)
 
       #ensure we have a xml_cache dir
-      unless @episodes_xml_path.dirname.directory? 
-        FileUtils.mkdir_p(@episodes_xml_path.dirname.to_s)  
-      end 
+      unless @episodes_xml_path.dirname.directory?
+        FileUtils.mkdir_p(@episodes_xml_path.dirname.to_s)
+      end
       @episodes_xml_path.open("w")  {|file| file.puts episodes_xml}
       @episodes_xmldoc = Document.new(episodes_xml) unless episodes_xml.nil?
-    else 
+    else
       @episodes_xml_path.open("r") {|file| @episodes_xmldoc = Document.new(file) }
     end
-    
+
     @episodes_xmldoc.elements.each("Data/Episode") do |episode|
       @episodes[episode.elements["SeasonNumber"].text] = Hash.new unless @episodes[episode.elements["SeasonNumber"].text].class == Hash
       @episodes[episode.elements["SeasonNumber"].text][episode.elements["EpisodeNumber"].text] = episode.elements["EpisodeName"].text
     end unless @episodes_xmldoc.nil?
   end
-  
+
   def id()
-    @series_xmldoc.elements["Series/id"].text 
-  end 
-  
+    @series_xmldoc.elements["Series/id"].text
+  end
+
+  def do_name_overrides
+    if @name == "CSI" or @name == "CSI: Las Vegas"
+      @name = "CSI: Crime Scene Investigation"
+    end
+  end
+
   def strip_dots(s)
     s.gsub(".","")
-  end 
+  end
   def get_episodes_xml(series_id)
-    url = URI.parse("http://thetvdb.com/api/#{API_KEY}/series/#{series_id}/all/en.xml").to_s
-    res = RemoteRequest.new("get").read(url)
+    uri = URI.parse("http://thetvdb.com/api/#{API_KEY}/series/#{series_id}/all/en.xml")
+    res = RemoteRequest.new("get").read(uri)
 
     if res.nil?
       puts "Could not download XML Data for series ID #{series_id} -- #{url}"
@@ -108,31 +117,33 @@ class Series
       return element.to_s
     end
   end
-    
+
   def get_series_xml
-    url = URI.parse("http://thetvdb.com/api/GetSeries.php?seriesname=#{CGI::escape(@name)}").to_s
-    res = RemoteRequest.new("get").read(url)
+    name = @name.sub(/\(/, "").sub(/\)/, "")
+    uri = URI.parse("http://thetvdb.com/api/GetSeries.php?seriesname=#{CGI::escape(name)}&language=en")
+
+    res = RemoteRequest.new("get").read(uri)
 
     doc = Document.new res
-    
+
     series_xml = nil
     series_element = nil
 
     doc.elements.each("Data/Series") do |element|
-      series_element ||= element 
-        if strip_dots(element.elements["SeriesName"].text.downcase) == strip_dots(@name.downcase)	
+      series_element ||= element
+        if strip_dots(element.elements["SeriesName"].text.downcase) == strip_dots(@name.downcase)
         series_element = element
         break
       end
     end
     series_xml = series_element.to_s
     series_xml
-  end 
-  
+  end
+
   def get_episode(filename, season, episode_number, refresh)
     Episode.new(self, filename, season, episode_number, refresh)
-  end 
-end 
+  end
+end
 
 class Episode
   attr_reader :series, :season, :filename, :episode_number, :raw_name
@@ -143,14 +154,14 @@ class Episode
     @episode_number = episode_number
     @raw_name = series.episodes[season][episode_number]
   end
-  
+
   def name()
     get_name_and_part[0]
-  end 
+  end
 
   def part()
     get_name_and_part[1]
-  end 
+  end
 
   def get_name_and_part
     name = raw_name
@@ -162,7 +173,7 @@ class Episode
     end
     return [name, part]
   end
-end 
+end
 
 def fix_names!(epis)
   episodes = {}
@@ -178,7 +189,7 @@ def fix_names!(epis)
     }
     episodes.merge! episode
   end
-  
+
   fix_name!(episodes.sort, epis.first.filename)
 end
 
@@ -208,16 +219,16 @@ def fix_name!(episode, filename)
     new_dir = parent_dir.parent + Pathname(new_show_dir)
     rename_dir = true
   end
-  
+
   new_filename = filename.dirname + (new_basename + filename.extname)
-  
+
   if new_filename.to_s =~ /\%/
     puts "ERROR: FILENAME NOT COMPLETE"
     puts filename
-    puts new_filename		
+    puts new_filename
     exit
   end
-  
+
   if rename_dir
     puts "Renaming directory #{old_dir} to #{new_dir}"
     File.rename(old_dir, new_dir) unless old_dir == new_dir
@@ -231,7 +242,7 @@ def fix_name!(episode, filename)
     Pathname.new("#{@@config_dir}/renamer_cache.txt").open("a")  {|file| file.puts "#{Time.now.to_s}|||||#{new_filename}"}
     return filename
   end
-  
+
   if new_filename.file?
     puts "Can not rename #{filename} to #{new_filename} detected a duplicate"
   else
@@ -242,7 +253,7 @@ def fix_name!(episode, filename)
     @@renamer_cache.merge!({new_filename => Time.now})
     Pathname.new("#{@@config_dir}/renamer_cache.txt").open("a")  {|file| file.puts "#{Time.now.to_s}|||||#{new_filename}"}
   end
-  
+
   filename = new_filename
 end
 
@@ -259,14 +270,14 @@ def make_name(format_values, format_string)
   new_basename.gsub!(/\]/, "")
   new_basename.gsub!(/\[/, "")
 
-  # sanitize the name 
+  # sanitize the name
   new_basename.gsub!(/\:/, "-")
   ["?","\\",":","\"","|",">", "<", "*", "/"].each {|l| new_basename.gsub!(l,"")}
   new_basename.strip
 end
 
 def sanitize_name(name)
-  # sanitize the name 
+  # sanitize the name
   name.gsub!(/\:/, "-")
   ["?","\\",":","\"","|",">", "<", "*", "/"].each {|l| name.gsub!(l,"")}
   name.strip
@@ -274,40 +285,40 @@ end
 
 def drop_extension(filename)
   Pathname.new(filename.to_s[0, filename.to_s.length - filename.extname.length])
-end 
+end
 
 def get_details(file, refresh)
-  
+
   # figure out what the show is based on path and filename
-  season = nil 
+  season = nil
   show_name = nil
-  
-  file.parent.ascend do |item|  
-    if not season 
+
+  file.parent.ascend do |item|
+    if not season
       season = /\d+/.match(item.basename.to_s)
       if season
-        #possibly we may want special handling for 24 
+        #possibly we may want special handling for 24
         season = season[0]
       else
         season = "1"
         show_name = item.basename.to_s
         break
-      end 
-    else 
+      end
+    else
       show_name = item.basename.to_s
-      break 
-    end 	
+      break
+    end
   end
-  
+
   return nil unless  /\d+/ =~ file.basename
-  
+
   # check for a match in the style of 1x01
   if /(\d+)[x|X](\d+)([x|X](\d+))?/ =~ file.basename
     unless $4.nil?
       episode_number2 = $4.to_s
     end
     season, episode_number = $1.to_s, $2.to_s
-  else 
+  else
     # check for s01e01
     if /[s|S](\d+)x?[e|E](\d+)([e|E](\d+))?/ =~ file.basename
       unless $4.nil?
@@ -315,20 +326,20 @@ def get_details(file, refresh)
       end
       season, episode_number = $1.to_s, $2.to_s
     else
-      # the simple case 
+      # the simple case
       episode_number = /\d+/.match(file.basename)[0]
-      if episode_number.to_i > 99 && episode_number.to_i < 1900 
+      if episode_number.to_i > 99 && episode_number.to_i < 1900
         # handle the format 308 (season, episode) with special exclusion to year names Eg. 2000 1995
         season = episode_number[0,episode_number.length-2]
         episode_number = episode_number[episode_number.length-2 , episode_number.length]
-      end  
-    end 
-  end 
-  
+      end
+    end
+  end
+
   season = season.to_i.to_s
   episode_number = episode_number.to_i.to_s
   episode_number2 = episode_number2.to_i.to_s unless episode_number2.nil?
-  
+
   return nil if episode_number.to_i > 99
 
   if @@series[show_name].nil?
@@ -353,7 +364,7 @@ def get_details(file, refresh)
       puts line
     end
     puts
-  end	
+  end
 end
 
 
@@ -370,7 +381,7 @@ class RemoteRequest
 
   private
     class Get
-      def self.read(url)
+      def self.read(uri)
         attempt_number=0
         errors=""
         begin
@@ -378,8 +389,8 @@ class RemoteRequest
           if (attempt_number > 2) then
             return nil
           end
-          
-          file = Net::HTTP.get_response URI.parse(url)
+
+          file = Net::HTTP.get_response uri
           if (file.message != "OK") then
             raise InvalidResponseFromFeed, file.message
           end
@@ -426,13 +437,13 @@ format = nil
 refresh = false
 nocache = false
 
-parser = GetoptLong.new 
+parser = GetoptLong.new
 parser.set_options(
   ["-h", "--help", GetoptLong::NO_ARGUMENT],
-  ["-n", "--nocache", GetoptLong::NO_ARGUMENT], 
-  ["-r", "--refresh", GetoptLong::NO_ARGUMENT], 
+  ["-n", "--nocache", GetoptLong::NO_ARGUMENT],
+  ["-r", "--refresh", GetoptLong::NO_ARGUMENT],
   ["-f", "--format", GetoptLong::OPTIONAL_ARGUMENT]
-) 
+)
 
 @@config = {}
 @@series = {}
@@ -450,7 +461,7 @@ if File.exist?("#{@@config_dir}/tvrenamer.yml")
   @@config = YAML.load_file( "#{@@config_dir}/tvrenamer.yml" )
 end
 
-loop do 
+loop do
   opt, arg = parser.get
   break if not opt
   case opt
@@ -459,7 +470,7 @@ loop do
       break
     when "-f"
       format = arg
-      break 
+      break
     when "-r"
       refresh = true
       break
@@ -485,11 +496,11 @@ if not path
   path = Pathname.new(Dir.getwd)
 else
   path = Pathname.new(path)
-end 
+end
 
-if not path.directory?   
-  puts "Directory not found " + path	
-  usage 
+if not path.directory?
+  puts "Directory not found " + path
+  usage
   exit
 end
 
@@ -535,3 +546,4 @@ Pathname.new("#{@@config_dir}/renamer_cache.txt").delete if Pathname.new("#{@@co
   Pathname.new("#{@@config_dir}/renamer_cache.txt").open("a")  {|file| file.puts "#{time}|||||#{filename.to_s}"}
 end
 puts "Done!" unless ENV['QUIET'] = "true"
+
