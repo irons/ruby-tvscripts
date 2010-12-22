@@ -54,13 +54,17 @@ else
 end
 
 puts "Was not able to get DB file, please check #{@@config_dir}/delete-watched.yml file.  Please see example file." if SETTINGS.nil? or SETTINGS.empty?
-puts "DB settings need to include an engine type" if SETTINGS['engine'].nil?
+puts "DB settings need to include an engine type" if SETTINGS['databases'][0]['engine'].nil?
 
-case SETTINGS['engine']
-when 'mysql'
-  DB = Sequel.connect("mysql://#{SETTINGS['user']}:#{SETTINGS['password']}@#{SETTINGS['host']}/#{SETTINGS['db']}")
-when 'sqlite'
-  DB = Sequel.connect("sqlite://#{SETTINGS['file']}")
+DB = []
+
+SETTINGS['databases'].each_with_index do |database,i|
+  case database['engine']
+  when 'mysql'
+    DB[i] = Sequel.connect("mysql://#{database['user']}:#{database['password']}@#{database['host']}/#{database['db']}")
+  when 'sqlite'
+    DB[i] = Sequel.connect("sqlite://#{database['file']}")
+  end
 end
 
 path = ARGV.shift 
@@ -78,18 +82,49 @@ end
 
 MEDIA_DIR = path.to_s
 
+number_of_databases = DB.size
+
 delete_episodes = []
 
-episodes = DB[:episodeview].where('playCount > 0')
-episodes.each do |episode|
-  file = Pathname.new(episode[:strPath] + episode[:strFileName]).to_s
-  file.sub!(SETTINGS['string_find'], SETTINGS['string_replace']) unless SETTINGS['string_find'].nil? or SETTINGS['string_replace'].nil?
-  file = Pathname.new(file)
-  delete_episodes << file if file.file?
+file_count = {}
+total_file_count = {}
+
+DB.each_with_index do |database,i|
+  episodes = database[:episodeview]
+  episodes.each do |episode|
+    file = Pathname.new(episode[:strPath] + episode[:strFileName]).to_s
+    file.sub!(SETTINGS['databases'][i]['string_find'], SETTINGS['databases'][i]['string_replace']) unless SETTINGS['databases'][i]['string_find'].nil? or SETTINGS['databases'][i]['string_replace'].nil?
+    file = Pathname.new(file)
+    total_file_count[file.to_s] = 0 if total_file_count[file.to_s].nil?
+    total_file_count[file.to_s] = total_file_count[file.to_s] + 1
+#    puts "Counting file #{file} in #{i} now #{total_file_count[file.to_s]}"
+  end
+  
+  episodes = database[:episodeview].where('playCount > 0')
+  episodes.each do |episode|
+    file = Pathname.new(episode[:strPath] + episode[:strFileName]).to_s
+    file.sub!(SETTINGS['databases'][i]['string_find'], SETTINGS['databases'][i]['string_replace']) unless SETTINGS['databases'][i]['string_find'].nil? or SETTINGS['databases'][i]['string_replace'].nil?
+    file = Pathname.new(file)
+    if file.file?
+#      puts "Found watched file #{file} in #{i}"
+      file_count[file.to_s] = 0 if file_count[file.to_s].nil?
+      file_count[file.to_s] = file_count[file.to_s] + 1
+    end
+  end
 end
 
-if not delete_episodes.nil? and delete_episodes.size > 0
+file_count.each do |name, count|
+  if count == total_file_count[name]
+#    puts "Deleting #{name} had #{count} watches and #{total_file_count[name]}"
+    delete_episodes << Pathname.new(name)
+  else
+#    puts "NOT Deleting #{name} had #{count} watches and #{total_file_count[name]}" 
+  end
+end
 
+delete_episodes.sort!
+
+if not delete_episodes.nil? and delete_episodes.size > 0
   delete_episodes.each do |file|
     puts file
   end
