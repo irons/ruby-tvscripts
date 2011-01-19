@@ -1,0 +1,11 @@
+# engine: "sqlite"
+# file: "/home/brian/.xbmc/userdata/Database/MyVideos34.db"
+username: "tecnobrat"
+password: "sha1password"
+apikey: "apikeyhere"
+database:
+    engine: "mysql"
+    host: "localhost"
+    user: "xbmc"
+    password: "xbmc"
+    db: "xbmc_video"
