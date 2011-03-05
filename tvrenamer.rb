@@ -508,14 +508,14 @@ end
 
 cache_file = Pathname.new("#{@@config_dir}/renamer_cache.txt")
 
-puts "Loading cache" unless ENV['QUIET'] = "true"
+puts "Loading cache" unless ENV['QUIET'] == "true"
 cache_file.readlines.each { |line|
     arr = line.chomp.split("|||||")
     @@renamer_cache.merge!({arr[1] => Time.parse(arr[0])})
 } if cache_file.file?
-puts "Loaded cache" unless ENV['QUIET'] = "true"
+puts "Loaded cache" unless ENV['QUIET'] == "true"
 
-puts "Starting to scan files" unless ENV['QUIET'] = "true"
+puts "Starting to scan files" unless ENV['QUIET'] == "true"
 Dir.glob("**/*.{avi,mpg,mpeg,mp4,divx,mkv}") do |filename|
   filename = filename.to_s
   if nocache or @@renamer_cache[filename].nil? or @@renamer_cache[filename] < (Time.now - @@time_to_live)
@@ -545,5 +545,5 @@ Pathname.new("#{@@config_dir}/renamer_cache.txt").delete if Pathname.new("#{@@co
 @@renamer_cache.each do |filename,time|
   Pathname.new("#{@@config_dir}/renamer_cache.txt").open("a")  {|file| file.puts "#{time}|||||#{filename.to_s}"}
 end
-puts "Done!" unless ENV['QUIET'] = "true"
+puts "Done!" unless ENV['QUIET'] == "true"
 
