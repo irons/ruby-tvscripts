@@ -515,6 +515,7 @@ cache_file.readlines.each { |line|
 } if cache_file.file?
 puts "Loaded cache" unless ENV['QUIET'] == "true"
 
+Dir.chdir(path)
 puts "Starting to scan files" unless ENV['QUIET'] == "true"
 Dir.glob("**/*.{avi,mpg,mpeg,mp4,divx,mkv}") do |filename|
   filename = filename.to_s
