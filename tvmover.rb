@@ -295,7 +295,7 @@ end
 puts "Starting to scan files" unless ENV['QUIET'] = "true"
 Find.find(source_path.to_s) do |filename|
   Find.prune if [".","..",".ruby-tvmover"].include? filename
-  if filename =~ /\.(avi|mpg|mpeg|mp4|divx|mkv)$/
+  if filename =~ /\.(avi|mpg|mpeg|mp4|m4v|divx|mkv)$/
     episode = get_details(Pathname.new(filename))
     if episode
       begin
